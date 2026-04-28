@@ -30,9 +30,8 @@ RFind-G/
 │   ├── Step1_SNPs.R         dosage.gz × 22 → effectSNPs抽出 (~80 min @ 8 cores + pigz)
 │   ├── Step2_Analysis.R     allele flip + PRS 計算 + 7 plot (~10 sec)
 │   ├── Step3_RFind.R        RFscore-G 計算 + 7 plot (~5 sec, 並列)
-│   ├── Step4_figures.R      主要 3 図 (violin / scatter / ROC) (~3 sec)
-│   └── make_dummy_data.R    RawData/ の demo 用 dummy data 生成
-├── Docs/                    handoff document (md / html / pptx)
+│   └── Step4_figures.R      主要 3 図 (violin / scatter / ROC) (~3 sec)
+├── Docs/                    handoff document (md / html)
 ├── RawData/                 dummy demo data (300 samples, ~7 MB) — 実運用時は自前データに置換
 ├── Step1_SNPs/              outputs (gitignored)
 ├── Step2_Analysis/          outputs (gitignored)
@@ -43,15 +42,13 @@ RFind-G/
 ## Quick start
 
 ```r
-# 1. project root に setwd (script は getwd() を base_dir として使う)
-setwd("/path/to/RFind-G")
+# project root に setwd するだけで全 script 動きます (各 script は getwd() を base_dir に取る)。
+# Step1 が setwd(workdir) で cwd を変えるので、後続 source の前に毎回 setwd し直す。
 
-# 2. dummy demo data (RawData/) で動作確認
-source("Code/Step1_SNPs.R")        # PGS ID プロンプト (デフォルト PGS004228)
-source("Code/Step2_Analysis.R")
-source("Code/Step3_RFind.R")
-# Step4 は ROSMAP 個人 ID の fold ハードコードのため、自前 cohort では fold 再生成必須
-# (詳細 Docs/RFind-G_handoff.md §4.3)
+setwd("/path/to/RFind-G"); source("Code/Step1_SNPs.R")    # PGS ID プロンプト (デフォルト PGS004228)
+setwd("/path/to/RFind-G"); source("Code/Step2_Analysis.R")
+setwd("/path/to/RFind-G"); source("Code/Step3_RFind.R")
+setwd("/path/to/RFind-G"); source("Code/Step4_figures.R") # 別 cohort なら fold は auto-regen される
 ```
 
 > **DEMO 注意**: `RawData/` の dummy は random dosage / random clinical なので、
@@ -71,20 +68,3 @@ source("Code/Step3_RFind.R")
 - **表現型**: `individualID` + case/control 列の CSV
 
 > ROSMAP データは [AD Knowledge Portal (synapse.org)](https://www.synapse.org/) から取得できますが、controlled access のため別途承認が必要です。
-
-## 適用例 (依頼ベース)
-
-本 pipeline は元々 ROSMAP (Alzheimer's Disease) で検証されましたが、原理上 **任意の二値表現型 + PGS** に適用可能です。本 repo は DM / 高血圧 / その他疾患への横展開を前提に整備されています。詳細は [Docs/RFind-G_handoff.md](Docs/RFind-G_handoff.md) を参照。
-
-## Citation
-
-未発表 (2026-04 時点)。本 pipeline を利用された場合はその旨ご連絡いただけると助かります。
-
-## Contact
-
-- 村野 智之 (murano.mg@gmail.com)
-- 宮川研究室 / 藤田医科大学 総合医科学研究所
-
-## License
-
-MIT (see [LICENSE](LICENSE))
