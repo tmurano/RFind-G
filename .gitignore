@@ -2,8 +2,15 @@
 # RFind-G .gitignore
 # ============================================================
 
-# Raw genotype / dosage data (sensitive, large)
-RawData/
+# NOTE:
+#   RawData/ には現在 dummy demo data が入っています (Code/make_dummy_data.R 生成)。
+#   実データに置き換えて使う場合、commit しないよう注意してください。
+#   ROSMAP 等の controlled-access genotype は Data Use Agreement で再配布禁止。
+#
+# 実データ commit 防止用 (size>100MB の dosage.gz を一律 ignore):
+RawData/AMP-AD_ROSMAP_Rush-Broad_AffymetrixGenechip6_Imputed_chr*.dosage.gz.real
+# (※ 上記は意図的に存在しないファイル名 — dummy は ignore せず、real を入れる際は
+#     拡張子を .real にリネームして退避するのが安全)
 
 # Step1 intermediate outputs (regeneratable from RawData via Step1_SNPs.R)
 Step1_SNPs/*.csv

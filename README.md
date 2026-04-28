@@ -31,9 +31,9 @@ RFind-G/
 │   ├── Step2_Analysis.R     allele flip + PRS 計算 + 7 plot (~10 sec)
 │   ├── Step3_RFind.R        RFscore-G 計算 + 7 plot (~5 sec, 並列)
 │   ├── Step4_figures.R      主要 3 図 (violin / scatter / ROC) (~3 sec)
-│   └── diagnostic_plots.R   Step2/3 共通プロットヘルパー
-├── Docs/                    handoff document (md / html)
-├── RawData/                 入力 data (gitignored、要自前準備)
+│   └── make_dummy_data.R    RawData/ の demo 用 dummy data 生成
+├── Docs/                    handoff document (md / html / pptx)
+├── RawData/                 dummy demo data (300 samples, ~7 MB) — 実運用時は自前データに置換
 ├── Step1_SNPs/              outputs (gitignored)
 ├── Step2_Analysis/          outputs (gitignored)
 ├── Step3_RFind/             outputs (gitignored)
@@ -43,15 +43,19 @@ RFind-G/
 ## Quick start
 
 ```r
-# cwd = repo root
+# 1. project root に setwd (script は getwd() を base_dir として使う)
 setwd("/path/to/RFind-G")
 
-# 各 script 冒頭の base_dir を貴環境に変更後、順次実行
-source("Code/Step1_SNPs.R")        # PGS ID プロンプト (PGS Catalog 形式の txt が必要)
+# 2. dummy demo data (RawData/) で動作確認
+source("Code/Step1_SNPs.R")        # PGS ID プロンプト (デフォルト PGS004228)
 source("Code/Step2_Analysis.R")
 source("Code/Step3_RFind.R")
-source("Code/Step4_figures.R")
+# Step4 は ROSMAP 個人 ID の fold ハードコードのため、自前 cohort では fold 再生成必須
+# (詳細 Docs/RFind-G_handoff.md §4.3)
 ```
+
+> **DEMO 注意**: `RawData/` の dummy は random dosage / random clinical なので、
+> RFscore / PRS / AUC は意味のない値 (chance level) になります。format / 動作確認のみ。
 
 ### 環境
 
