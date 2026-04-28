@@ -23,7 +23,8 @@ pgs_id <- trimws(pgs_id)
 cat("PGS ID:", pgs_id, "\n")
 
 # ---- パス ----
-base_dir  <- "~/Miyakawa Lab Dropbox/Murano Tomoyuki/RFind-G_260428"
+# 実行前に setwd("/path/to/RFind-G") (project root) してください
+base_dir  <- normalizePath(getwd(), mustWork = TRUE)
 raw_dir   <- file.path(base_dir, "RawData")        # PGS txt 等の原データ
 step1_dir <- file.path(base_dir, "Step1_SNPs")     # Step1 出力 (metadata, effectSNPs)
 workdir   <- file.path(base_dir, "Step2_Analysis") # Step2 出力

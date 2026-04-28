@@ -173,7 +173,7 @@ RFind-G_260428/
 ### 4.3 実行
 
 ```r
-# 各 script 冒頭の base_dir を貴社環境に変更後、順次実行
+# project root に setwd するだけで全 script 動きます (base_dir は getwd() ベース)
 setwd("/path/to/RFind-G_workspace")
 source("Code/Step1_SNPs.R")        # PGS ID プロンプト
 source("Code/Step2_Analysis.R")

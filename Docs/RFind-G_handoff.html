@@ -295,7 +295,7 @@ rs7903146    10    T    0.342    C
 
 <h3>4.3 実行</h3>
 
-<pre><code># 各 script 冒頭の base_dir を貴社環境に変更後、順次実行
+<pre><code># project root に setwd するだけで全 script 動きます (base_dir は getwd() ベース)
 setwd("/path/to/RFind-G_workspace")
 source("Code/Step1_SNPs.R")        # PGS ID プロンプト
 source("Code/Step2_Analysis.R")

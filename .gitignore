@@ -32,3 +32,6 @@ Step3_RFind/Step3_RFscore_plots_*.png
 
 # Claude Code session files
 .claude/
+
+# MS Office lock/temp files (~$<filename>, 開いてる間だけ存在)
+~$*

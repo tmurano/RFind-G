@@ -17,7 +17,8 @@ suppressPackageStartupMessages({
 })
 
 # ---- パス & PGS ----
-BASE_DIR <- "~/Miyakawa Lab Dropbox/Murano Tomoyuki/RFind-G_260428"
+# 実行前に setwd("/path/to/RFind-G") (project root) してください
+BASE_DIR <- normalizePath(getwd(), mustWork = TRUE)
 PGS_ID   <- "PGS004228"
 PATH_G   <- file.path(BASE_DIR, "Step3_RFind",    paste0("RFinD_G_scores_", PGS_ID, ".csv"))
 PATH_PRS <- file.path(BASE_DIR, "Step2_Analysis", paste0("PRS_",            PGS_ID, ".csv"))

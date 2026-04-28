@@ -24,7 +24,8 @@ pgs_id <- trimws(pgs_id)
 cat("PGS ID:", pgs_id, "\n")
 
 # ---- パス & パラメータ ----
-base_dir  <- path.expand("~/Miyakawa Lab Dropbox/Murano Tomoyuki/RFind-G_260428")
+# 実行前に setwd("/path/to/RFind-G") (project root) してください
+base_dir  <- normalizePath(getwd(), mustWork = TRUE)
 input_dir <- file.path(base_dir, "RawData")     # 読み込み (dosage.gz, fam, csv, txt)
 workdir   <- file.path(base_dir, "Step1_SNPs")  # 書き出し (metadata, effectSNPs, tmp_)
 if (!dir.exists(workdir)) dir.create(workdir, recursive = TRUE)
