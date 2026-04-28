@@ -107,35 +107,45 @@
 
 <h1>RFind-G 共同解析ご依頼資料</h1>
 
-<p class="meta"><strong>作成</strong>: 村野 (宮川研究室) / 2026-04-28<br>
-<strong>宛先</strong>: Genequest 技術担当者様</p>
+<p class="meta"><strong>作成</strong>: 村野 / 2026-04-28</p>
 
 <hr>
 
-<h2>1. 依頼概要</h2>
+<h2>1. ROSMAP 結果概要</h2>
 
-<p>宮川研では PRS の代替個人リスクスコア <strong>RFscore-G</strong> を開発し、ROSMAP cohort (Alzheimer's Disease, N=1,637) で検証しました。同手法を <strong>貴社が保有する DM (糖尿病) / 高血圧の genotype + 表現型データ</strong> に適用し、PRS 単独との比較評価をご依頼いたします。<strong>コードのチューニング・最適化のご依頼ではありません</strong>。本資料の pipeline をそのまま (or 必要最小の入力アダプタのみ追加で) 流していただく想定です。</p>
+<p>PRS の代替個人リスクスコア <strong>RFscore-G</strong> を開発し、ROSMAP cohort (Alzheimer's Disease, N=1,637 → AD vs NCI 評価対象 N=1,170, PGS004228) で検証。</p>
 
-<h3>ご提供いただきたい結果</h3>
+<h3>主要結果 (5-fold StratifiedKFold CV, glm logistic regression)</h3>
 
 <table>
-<thead><tr><th>#</th><th>内容 (DM, HTN 各 cohort で 1 set)</th></tr></thead>
+<thead><tr><th>指標</th><th>RFscore-G</th><th>PRS</th><th>Combined (PRS + RFscore-G)</th></tr></thead>
 <tbody>
-<tr><td>1</td><td><code>RFinD_G_scores_&lt;PGS&gt;.csv</code> (個人 RFscore-G + clinical)</td></tr>
-<tr><td>2</td><td><code>PRS_&lt;PGS&gt;.csv</code> (個人 PRS + clinical)</td></tr>
-<tr><td>3</td><td>AUC ± SD (RFscore-G / PRS / Combined), Spearman ρ (vs PRS), Cohen's d, Wilcoxon p</td></tr>
-<tr><td>4</td><td>主要 3 図 (<code>G_violin.png</code>, <code>G_scatter_PRS.png</code>, <code>G_ROC.png</code>)</td></tr>
-<tr><td>5</td><td>使用 PGS Catalog ID + case/control 定義 (簡潔な README で OK)</td></tr>
+<tr><td><strong>AUC</strong> (mean ± SD)</td><td><strong>0.728 ± 0.040</strong></td><td><strong>0.755 ± 0.054</strong></td><td><strong>0.758 ± 0.057</strong></td></tr>
+<tr><td>Cohen's d (AD vs NCI)</td><td>0.86</td><td>0.99</td><td>—</td></tr>
+<tr><td>Wilcoxon p</td><td>&lt; 0.001</td><td>&lt; 0.001</td><td>—</td></tr>
+<tr><td>Spearman ρ (vs PRS)</td><td><strong>0.925</strong></td><td>—</td><td>—</td></tr>
+<tr><td>R² (<code>lm(RFscore_z ~ PRS_z)</code>)</td><td><strong>0.859</strong></td><td>—</td><td>—</td></tr>
 </tbody>
 </table>
 
-<p>ROSMAP 参考結果 (PGS004228, AD vs NCI, N=1,170): AUC RFscore-G <strong>0.730 ± 0.041</strong> / PRS <strong>0.755 ± 0.054</strong> / Spearman ρ <strong>0.922</strong> / R² (RFscore_z ~ PRS_z) <strong>0.859</strong>。</p>
+<h3>図 (Step4 出力)</h3>
+
+<p><a href="../Step4_figures/G_violin.png">G_violin.png</a> / <a href="../Step4_figures/G_scatter_PRS.png">G_scatter_PRS.png</a> / <a href="../Step4_figures/G_ROC.png">G_ROC.png</a></p>
+
+<h3>解釈サマリ</h3>
+
+<ul>
+<li><strong>PRS と RFscore-G は強相関</strong> (ρ = 0.925, R² = 0.859) → 両者は同じ情報を別パラダイムで再表現</li>
+<li>AUC は <strong>PRS がやや勝るが (0.755 vs 0.728)、Combined で改善は小</strong> (0.758) → 独立予測情報は限定的</li>
+<li><strong>β スケール不変・閾値不要・Control 基準</strong> という性質で PRS とは異なる方法論的位置づけ</li>
+<li>別 cohort / 別表現型での同様検証が次の検証ポイント</li>
+</ul>
 
 <hr>
 
 <h2>2. RFscore-G アルゴリズム</h2>
 
-<p>PGS の β を <strong>線形和 (PRS)</strong> ではなく <strong>方向別ランクの濃縮検定 (Running Fisher)</strong> で集計するアプローチ。スケール不変・閾値不要・cohort 構成頑健、という性質を持つ。</p>
+<p>PGS の β を <strong>線形和 (PRS)</strong> ではなく <strong>方向別ランクの濃縮検定 (Running Fisher)</strong> で集計するアプローチ。</p>
 
 <table>
 <thead><tr><th></th><th>PRS</th><th>RFscore-G</th></tr></thead>
@@ -147,13 +157,38 @@
 </tbody>
 </table>
 
-<h3>2.1 g1 シグネチャ (PGS 由来、サンプル非依存)</h3>
+<h3>2.1 Effective SNP set (universe P) の決定</h3>
+
+<p>g1 と g2 の hypergeometric 検定の <strong>母集団 (universe)</strong> となる SNP セット P は、以下のフィルタで決定する:</p>
+<pre><code>PGS Catalog rsID (8,863 for PGS004228)
+        ∩
+ROSMAP dosage に存在する rsID (Step1 awk で抽出 → 8,193 個、92.4% マッチ)
+        −
+allele mismatch (effect_allele が dosage の a1/a2 どちらとも一致しない SNP, ROSMAP では 0 個)
+        ↓
+   P = 8,193  ← effective SNP universe</code></pre>
+
+<p><strong>P の意義</strong>:</p>
+<ul>
+<li>g1, g2 の <strong>両方が定義される空間</strong>。g1 (PGS β 由来) も g2 (個人 dosage 偏差由来) も全て 1:P の index で表現される</li>
+<li>Hypergeometric の母集団 size として <code>phyper(overlap-1, N, P-N, M, ...)</code> の <code>P</code> に直接入る</li>
+<li>マッチ率が低い (&lt; 50% 程度) と P が小さくなり、検定 power が低下 → 別 PGS の選定 or rsID liftover (dbSNP build 違い解消) を検討</li>
+</ul>
+
+<p><strong>マッチ率の典型値</strong>:</p>
+<ul>
+<li>PGS が dataset と同じ genotyping array / imputation panel ベースなら 80-95% (PGS004228 × ROSMAP は 92.4%)</li>
+<li>dbSNP build 違い (例 GRCh37 vs GRCh38) の場合 40-60% に低下することあり</li>
+<li>PGS 公開時の rsID と dataset の rsID 命名規則が異なる場合も低下</li>
+</ul>
+
+<h3>2.2 g1 シグネチャ (PGS 由来、サンプル非依存)</h3>
 
 <p>PGS 重み β を <strong>方向別・絶対値降順</strong> で並べる:</p>
 <pre><code>g1_up   = { i : β_i &gt; 0 } を |β| 降順で並べた順位列
 g1_down = { i : β_i &lt; 0 } を |β| 降順で並べた順位列</code></pre>
 
-<h3>2.2 g2 シグネチャ (個人 j ごと)</h3>
+<h3>2.3 g2 シグネチャ (個人 j ごと)</h3>
 
 <p>各 SNP について <strong>Control 平均 dosage</strong> からの偏差を計算:</p>
 <pre><code>fc_{ij} = dose_{ij} - mean_Control(dose_i)
@@ -161,7 +196,7 @@ g2_up_j = { i : fc_{ij} &gt; 0 } を fc 降順
 g2_dn_j = { i : fc_{ij} &lt; 0 } を |fc| 降順</code></pre>
 <p><strong>Reference を Control 平均にした理由</strong>: cohort 全平均だと case 比率に応じて baseline が歪む。Control 基準なら「case が control から逸脱している方向 / 強さ」を直接測れる。Control N &lt; 10 のときのみ自動で全 sample 平均にフォールバック。</p>
 
-<h3>2.3 Running Fisher 検定 RF(g1, g2)</h3>
+<h3>2.4 Running Fisher 検定 RF(g1, g2)</h3>
 
 <p><code>g1</code> 上位 N と <code>g2</code> 上位 M の重複を hypergeometric 検定で評価し、N×M グリッドで <strong>最大 -log10(p)</strong> を採用 (GSEA 様の non-parametric enrichment):</p>
 <pre><code>RF(g1, g2) = max_{N ∈ N_seq, M ∈ M_seq}
@@ -173,7 +208,7 @@ g2_dn_j = { i : fc_{ij} &lt; 0 } を |fc| 降順</code></pre>
 <li>グリッド走査により「best cutoff」を後決め → 任意閾値に依らない</li>
 </ul>
 
-<h3>2.4 最終 RFscore (4 方向の符号付き和)</h3>
+<h3>2.5 最終 RFscore (4 方向の符号付き和)</h3>
 
 <pre><code>RFscore_j = + RF(g1_up,   g2_up_j)    PGS↑ × 個人↑   ┐ concordant
             + RF(g1_down, g2_dn_j)    PGS↓ × 個人↓   ┘
@@ -181,19 +216,18 @@ g2_dn_j = { i : fc_{ij} &lt; 0 } を |fc| 降順</code></pre>
             − RF(g1_down, g2_up_j)    逆方向         ┘</code></pre>
 <p><strong>解釈</strong>: PGS が示すリスク方向に個人偏差が強く濃縮しているほど高スコア。逆方向の濃縮は protective として減点。直感的には「PGS の SNP セットに対する個人 GSEA-like signed enrichment」。</p>
 
-<h3>2.5 パラメータ (既定で OK)</h3>
+<h3>2.6 パラメータ (既定)</h3>
 
 <table>
 <thead><tr><th>名前</th><th>既定</th><th>意味</th></tr></thead>
 <tbody>
 <tr><td><code>GRID_STEP</code></td><td>50</td><td>Running Fisher の N, M 走査刻み (小さいほど精細、計算コスト増)</td></tr>
-<tr><td><code>TOP_K</code></td><td>10,000</td><td>個人 g2 SNP 上限 (P が小さい場合は無効、underflow 抑制用)</td></tr>
 </tbody>
 </table>
 
-<h3>2.6 補足: PRS との関係 (重要)</h3>
+<h3>2.7 補足: PRS との関係 (重要)</h3>
 
-<p>ROSMAP では <code>lm(RFscore_z ~ PRS_z)</code> の <strong>R² = 0.859</strong> で、両者は強相関 (Spearman ρ = 0.922)。RF 残差の AUC = 0.533 ≈ chance。すなわち:</p>
+<p>ROSMAP では <code>lm(RFscore_z ~ PRS_z)</code> の <strong>R² = 0.859</strong> で、両者は強相関 (Spearman ρ = 0.922)。すなわち:</p>
 
 <blockquote>
 <p><strong>RFscore-G は PRS と独立した予測情報を持つわけではなく、同じ情報を別パラダイムで再表現したもの</strong></p>
@@ -206,62 +240,65 @@ g2_dn_j = { i : fc_{ij} &lt; 0 } を |fc| 降順</code></pre>
 <li><strong>コホート構成頑健</strong>: case 比率による baseline 変動を Control 基準で吸収</li>
 </ul>
 
-<p>→ <strong>DM / HTN でも同様の傾向 (高 ρ + AUC 同等) が再現するか</strong> が本依頼の主要検証ポイント。</p>
+<p>→ <strong>別 cohort / 別表現型でも同様の傾向 (高 ρ + AUC 同等) が再現するか</strong> が次の検証ポイント。</p>
 
 <hr>
 
-<h2>3. 必要な入力データ</h2>
+<h2>3. 入力データ (ROSMAP の場合)</h2>
+
+<p>ROSMAP cohort で実際に使用したデータの仕様。本 pipeline はこの形式を canonical input として実装している。</p>
 
 <h3>3.1 SNP genotype</h3>
 
-<p><strong>貴社データ形式 (VCF / PLINK bed / dosage / BGEN 等) をまずご教示ください</strong>。本 pipeline は ROSMAP の <strong>PLINK dosage (.dosage.gz, 22 chr 分割)</strong> を canonical input として実装していますが、貴社形式に応じて Step1 のローダ部分を調整します (本体ロジックは形式非依存)。</p>
-
-<p>ROSMAP 形式 (参考):</p>
+<p><a href="https://www.synapse.org/">AD Knowledge Portal (synapse.org)</a> から取得した imputed PLINK dosage:</p>
 <ul>
-<li><code>*.dosage.gz</code> (chr 別、space-delimited、header なし):
-<pre><code>rsID a1 a2 dose_s1 dose_s2 ... dose_sN
-rs55998931 C T 1.93 1.94 ... 1.93</code></pre>
+<li><code>AMP-AD_ROSMAP_Rush-Broad_AffymetrixGenechip6_Imputed_chr{1..22}.dosage.gz</code> (chr 別、22 ファイル、計 ~36 GB)
 <ul>
-<li>dose は {0, 1, 2} の連続値 (imputed dosage)</li>
-<li><code>a1</code> = effect-allele (PGS 側 effect_allele との一致 or flip 判定に使用)</li>
+<li>space-delimited、header なし</li>
+<li>列: <code>rsID a1 a2 dose_s1 dose_s2 ... dose_sN</code></li>
+<li>例: <code>rs55998931 C T 1.93 1.94 ... 1.93</code></li>
+<li>dose は {0, 1, 2} の連続値 (Affymetrix Genechip 6 → imputation)</li>
+<li><code>a1</code> = effect-allele 候補 (PGS 側 effect_allele との一致 or flip 判定に使用)</li>
 </ul>
 </li>
-<li><code>*.fam</code> (PLINK 標準 6 列): <code>FID IID PID MID SEX PHENO</code>
-<ul>
-<li><code>IID</code> 順序が dosage の sample 列順と <strong>完全一致</strong> すること</li>
-</ul>
+<li><code>AMP-AD_ROSMAP_Rush-Broad_AffymetrixGenechip6_Imputed.fam</code> (PLINK 標準 6 列): <code>FID IID PID MID SEX PHENO</code>
+<ul><li><code>IID</code> 順序が dosage の sample 列順と完全一致 (1,708 sample)</li></ul>
 </li>
 </ul>
-
-<p>VCF / BGEN の場合、<code>PLINK2 --recode A-transpose</code> 等で dosage 形式へ変換してから入力するのが最短です。</p>
 
 <h3>3.2 PGS Catalog ファイル</h3>
 
-<p>DM / 高血圧の PGS は <strong>貴社にて PGS Catalog から選定</strong> をお願いします。形式は PGS Catalog 標準 (tab-delimited, <code>#</code> で始まる metadata header):</p>
-<pre><code>#PGS_ID=PGS00xxxx
-#trait_reported=Type 2 diabetes
+<p><a href="https://www.pgscatalog.org/">PGS Catalog</a> から取得した <strong>PGS004228</strong> (Alzheimer's Disease):</p>
+<pre><code>#PGS_ID=PGS004228
+#trait_reported=Alzheimer's disease
 ...
 rsID    chr_name    effect_allele    effect_weight    other_allele
-rs7903146    10    T    0.342    C
-...</code></pre>
+rs...   ...         ...              ...              ...</code></pre>
 <ul>
-<li>必須列: <code>rsID</code>, <code>effect_allele</code>, <code>effect_weight</code></li>
-<li>chr 列名は <code>chr_name</code> または <code>chr</code> を許容</li>
+<li>tab-delimited, <code>#</code> で始まる metadata header</li>
+<li>必須列: <code>rsID</code>, <code>effect_allele</code>, <code>effect_weight</code>, <code>chr_name</code> (or <code>chr</code>)</li>
+<li>8,863 rsID (chr1-22)</li>
 </ul>
 
 <h3>3.3 表現型 (case/control)</h3>
 
-<p>CSV、必須列:</p>
+<p><code>ROSMAP_clinical.csv</code> (AD Knowledge Portal):</p>
 <ul>
-<li><code>individualID</code>: dosage の sample IID と一致する識別子</li>
-<li><strong>case/control 列</strong>: 二値。<strong>DM / 高血圧の case/control 判定は貴社の臨床定義 (ICD コード / 服薬歴 / 検査値 等) に従って決定</strong> してください。スクリプト内の参照箇所 (<code>Step3_RFind.R</code> 80-91 行目: ROSMAP では <code>meta$dcfdx_lv == 1</code> で control を抽出) を、貴社の判定列名 + control 値に置換いただきます。</li>
+<li><code>individualID</code>: dosage の sample IID と biospecimen 経由で対応</li>
+<li>主要列: <code>dcfdx_lv</code> (last valid clinical cognitive diagnosis), <code>cogdx</code>, <code>braaksc</code>, <code>ceradsc</code>, <code>cts_mmse30_lv</code>, <code>msex</code>, <code>age_death</code>, etc.</li>
+<li><strong>本解析の case/control 定義</strong>: <code>dcfdx_lv == 1</code> (NCI, control) vs <code>dcfdx_lv == 4</code> (AD, case)
+<ul><li>N_NCI = 665, N_AD = 505 (合計 N = 1,170 が Step4 評価対象)</li></ul>
+</li>
 </ul>
 
-<p>その他、サブグループ解析 (年齢 / 性別 / 既往歴 等) で使いたい列があれば任意で含めてください (Step2/3 の plot 軸変数として利用可)。</p>
+<h3>3.4 補助データ</h3>
 
-<h3>3.4 補助データ (任意)</h3>
-
-<p>dosage の sample ID が <strong>specimen 単位</strong> (1 個人 = 複数 sample) の場合、<code>(specimenID, individualID)</code> の対応 CSV を別途ご用意ください (ROSMAP では <code>ROSMAP_biospecimen_metadata.csv</code>)。1 個人 = 1 sample なら不要。</p>
+<p><code>ROSMAP_biospecimen_metadata.csv</code>: specimen-individual 対応表</p>
+<ul>
+<li>ROSMAP では 1 individual に複数 specimen があり得るため必要</li>
+<li>Step1 で fam の <code>IID</code> (specimen 単位) → <code>individualID</code> 変換に利用</li>
+<li>1,637 sample が individual 単位に正しく mapping できた (元 1,708 から 71 失敗 = 5.4 cohort 構成上 specimen の重複等)</li>
+</ul>
 
 <hr>
 
@@ -281,7 +318,7 @@ rs7903146    10    T    0.342    C
 ├── Step3_RFind/             出力: RFinD_G_scores_&lt;PGS&gt;.csv, plots
 └── Step4_figures/           出力: G_violin.png, G_scatter_PRS.png, G_ROC.png</code></pre>
 
-<h3>4.2 各 Step の入出力</h3>
+<h3>4.2 各 Step の入出力ファイル</h3>
 
 <table>
 <thead><tr><th>Step</th><th>入力</th><th>主な出力</th></tr></thead>
@@ -304,32 +341,20 @@ source("Code/Step4_figures.R")</code></pre>
 
 <p><strong>環境</strong>: R ≥ 4.2 / <code>data.table, dplyr, ggplot2, tidyverse, pROC, ggforce, patchwork, glue, parallel, rstudioapi</code> / 推奨 16 GB RAM / <code>pigz</code> (任意, <code>brew install pigz</code> で Step1 高速化)。</p>
 
-<p><strong>Step4 の 5-fold fold は ROSMAP のハードコード</strong> (Python sklearn 一致確認用) のため、<strong>貴社 cohort では再生成必須</strong>です。例:</p>
+<p><strong>Step4 の分類評価フロー</strong>:</p>
+<ul>
+<li><code>dcfdx_lv ∈ {1, 4}</code> で AD vs NCI に絞る (N=1,170)</li>
+<li>5-fold StratifiedKFold で個人を分割 (<code>y</code> 比率を保ったまま)</li>
+<li>各 fold で <strong>training set の z-score で標準化</strong> → <strong><code>glm(family = binomial())</code> (logistic regression)</strong> を fit → test set で予測確率を出す → <code>pROC::auc</code> で AUC 計算</li>
+<li>5 fold の AUC を mean ± SD で報告</li>
+<li>単 feature (PRS_z 単独 / RFscore_z 単独) の場合 logistic は単調変換なので AUC = 単変量 AUC、<strong>Combined (PRS_z + RFscore_z) のみ logistic regression が 2 feature の最適線形結合を学習</strong></li>
+<li>ROC は 5 fold pooled prediction probability から作成</li>
+</ul>
+
+<p><strong>Fold の再現性</strong>: 現在の <code>folds_G_full</code> は Python sklearn <code>StratifiedKFold(seed=42)</code> と完全一致を確認するためにハードコードされた個人 ID → fold 番号のマッピング。<strong>ROSMAP 個人 ID と一致しない別 cohort では再生成が必要</strong>。例:</p>
 <pre><code>set.seed(42)
 fold_vec &lt;- caret::createFolds(label, k = 5, list = FALSE)</code></pre>
-<p>で <code>Step4_figures.R</code> の <code>folds_G_full</code> 部分を置き換えてください。</p>
-
-<hr>
-
-<h2>5. 補足</h2>
-
-<p class="faq-q">Q. ちょうど良い PGS が複数ある。どれを選ぶ?</p>
-<p class="faq-a">→ (1) 貴社 cohort と <strong>祖先構成が近い</strong> publication ベース、(2) <strong>N_SNP ~10⁴ 程度</strong> (極端に小さい / 大きいものは除外)、(3) <strong>multi-ancestry validation 報告あり</strong> のものを推奨。最終判断は貴社にお任せします。複数 PGS で比較いただいても OK。</p>
-
-<p class="faq-q">Q. 数値的問題 (Inf / underflow) は?</p>
-<p class="faq-a">→ ROSMAP (P=8,193, N=1,637) では発生せず。万一 hypergeom p が 0 にアンダーフロー (<code>-log10(0) = Inf</code>) したら <code>TOP_K</code> を下げて (例 10,000 → 5,000) g2 サイズを制限してください。</p>
-
-<p class="faq-q">Q. Step3 の Reference (Control) の定義は?</p>
-<p class="faq-a">→ 貴社 cohort の <strong>case/control 列で control に分類された個人の dosage 平均</strong> を使用。Control N &lt; 10 で自動的に全 sample 平均にフォールバックします (<code>Step3_RFind.R</code> 85-91 行目)。</p>
-
-<p class="faq-q">Q. Step4 図の軸変数は何にすべき?</p>
-<p class="faq-a">→ ROSMAP では <code>dcfdx_lv == 1 (NCI) vs == 4 (AD)</code> を case/control としています。DM / HTN では貴社の臨床判定二値変数 (例 <code>t2d_status</code>, <code>htn_status</code>) で <code>g_an &lt;- g_raw %&gt;% filter(...)</code> の filter 条件を書き換えてください。</p>
-
-<p class="faq-q">Q. Step1 の SNP マッチ率が低い (&lt; 50%) 場合は?</p>
-<p class="faq-a">→ PGS の rsID が dbSNP build 違いで genotype 側と不一致の可能性。<code>Step1_SNPs.R</code> で extract された SNP 数と PGS rsID 総数の比 (Step1 完了時に表示) を確認し、明らかに低い場合は別 PGS の選定 or rsID liftover が必要です。</p>
-
-<p class="faq-q">Q. 結果ファイル受け渡し</p>
-<p class="faq-a">→ CSV (Step1-3 全部 or 最低限 PRS と RFinD_G_scores)、PNG (Step4 の 3 図 + 任意で Step2/3 の診断 plot)、統計サマリ (text or md) を zip 化して共有 drive / メール添付で。<strong>生 genotype の送付は不要</strong>です。</p>
+<p>で <code>Step4_figures.R</code> の <code>folds_G_full</code> 部分を置き換えてください (現在は dummy data でも動くよう auto-regen 機能を実装済)。</p>
 
 </body>
 </html>

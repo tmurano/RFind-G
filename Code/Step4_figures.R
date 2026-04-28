@@ -222,6 +222,20 @@ folds_G_full <- c(
 fv_g <- as.integer(folds_G_full[g_an$individualID])
 y_g  <- g_an$y
 
+# 自前 cohort (ROSMAP 以外) で hardcoded fold が一致しない場合、
+# stratified 5-fold を seed=42 で再生成
+n_matched <- sum(!is.na(fv_g))
+if (n_matched < length(fv_g) * 0.5) {
+  cat(sprintf("Hardcoded ROSMAP folds matched only %d / %d samples. Regenerating stratified 5-fold (seed=42) ...\n",
+              n_matched, length(fv_g)))
+  set.seed(42)
+  fv_g <- integer(length(y_g))
+  for (lbl in unique(y_g)) {
+    idx <- which(y_g == lbl)
+    fv_g[idx] <- sample(rep(seq_len(5), length.out = length(idx)))
+  }
+}
+
 # ============================================================
 # 統計量計算
 # ============================================================
