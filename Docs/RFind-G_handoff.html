@@ -132,7 +132,7 @@
 
 <p><a href="../Step4_figures/G_violin.png">G_violin.png</a> / <a href="../Step4_figures/G_scatter_PRS.png">G_scatter_PRS.png</a> / <a href="../Step4_figures/G_ROC.png">G_ROC.png</a></p>
 
-<h3>解釈サマリ</h3>
+<h3>解釈</h3>
 
 <ul>
 <li><strong>PRS と RFscore-G は強相関</strong> (ρ = 0.925, R² = 0.859) → 両者は同じ情報を別パラダイムで再表現</li>
@@ -351,10 +351,7 @@ source("Code/Step4_figures.R")</code></pre>
 <li>ROC は 5 fold pooled prediction probability から作成</li>
 </ul>
 
-<p><strong>Fold の再現性</strong>: 現在の <code>folds_G_full</code> は Python sklearn <code>StratifiedKFold(seed=42)</code> と完全一致を確認するためにハードコードされた個人 ID → fold 番号のマッピング。<strong>ROSMAP 個人 ID と一致しない別 cohort では再生成が必要</strong>。例:</p>
-<pre><code>set.seed(42)
-fold_vec &lt;- caret::createFolds(label, k = 5, list = FALSE)</code></pre>
-<p>で <code>Step4_figures.R</code> の <code>folds_G_full</code> 部分を置き換えてください (現在は dummy data でも動くよう auto-regen 機能を実装済)。</p>
+<p>なお Step4 の細部 (fold 分け / case-control 列名 / filter 条件 / プロット軸変数等) は ROSMAP 特異的にハードコードしている部分があるので、別 cohort で動かす際は適宜書き換えてください。</p>
 
 </body>
 </html>

@@ -22,7 +22,7 @@ PRS の代替個人リスクスコア **RFscore-G** を開発し、ROSMAP cohort
 
 [Step4_figures/G_violin.png](../Step4_figures/G_violin.png) / [G_scatter_PRS.png](../Step4_figures/G_scatter_PRS.png) / [G_ROC.png](../Step4_figures/G_ROC.png)
 
-### 解釈サマリ
+### 解釈
 
 - **PRS と RFscore-G は強相関** (ρ = 0.925, R² = 0.859) → 両者は同じ情報を別パラダイムで再表現
 - AUC は **PRS がやや勝るが (0.755 vs 0.728)、Combined で改善は小** (0.758) → 独立予測情報は限定的
@@ -224,10 +224,5 @@ source("Code/Step4_figures.R")
 - 単 feature (PRS_z 単独 / RFscore_z 単独) の場合 logistic は単調変換なので AUC = 単変量 AUC、**Combined (PRS_z + RFscore_z) のみ logistic regression が 2 feature の最適線形結合を学習**
 - ROC は 5 fold pooled prediction probability から作成
 
-**Fold の再現性**: 現在の `folds_G_full` は Python sklearn `StratifiedKFold(seed=42)` と完全一致を確認するためにハードコードされた個人 ID → fold 番号のマッピング。**ROSMAP 個人 ID と一致しない別 cohort では再生成が必要**。例:
-```r
-set.seed(42)
-fold_vec <- caret::createFolds(label, k = 5, list = FALSE)
-```
-で `Step4_figures.R` の `folds_G_full` 部分を置き換えてください (現在は dummy data でも動くよう auto-regen 機能を実装済)。
+なお Step4 の細部 (fold 分け / case-control 列名 / filter 条件 / プロット軸変数等) は ROSMAP 特異的にハードコードしている部分があるので、別 cohort で動かす際は適宜書き換えてください。
 
