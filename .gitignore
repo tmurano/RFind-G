@@ -42,3 +42,6 @@ Step3_RFind/Step3_RFscore_plots_*.png
 
 # MS Office lock/temp files (~$<filename>, 開いてる間だけ存在)
 ~$*
+
+# pptx (local 保管、share 不要)
+Docs/*.pptx
