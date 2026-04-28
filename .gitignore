@@ -1,0 +1,34 @@
+# ============================================================
+# RFind-G .gitignore
+# ============================================================
+
+# Raw genotype / dosage data (sensitive, large)
+RawData/
+
+# Step1 intermediate outputs (regeneratable from RawData via Step1_SNPs.R)
+Step1_SNPs/*.csv
+
+# Step2 intermediate outputs (regeneratable via Step2_Analysis.R)
+Step2_Analysis/*.csv
+Step2_Analysis/Step2_PRSz_plots_*.png
+
+# Step3 intermediate outputs (regeneratable via Step3_RFind.R)
+Step3_RFind/*.csv
+Step3_RFind/Step3_RFscore_plots_*.png
+
+# /tmp の Step1 中間ファイルは元々 repo 外だが念のため
+**/RFind-G_step1_*
+
+# 旧解析レポート (project-specific、share 不要)
+260313_RFind-G_解析レポート.docx
+
+# macOS / RStudio / R session files
+.DS_Store
+.Rhistory
+.RData
+.Rproj.user/
+.Rproj
+*.Rproj
+
+# Claude Code session files
+.claude/
