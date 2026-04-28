@@ -242,6 +242,14 @@ g2_dn_j = { i : fc_{ij} &lt; 0 } を |fc| 降順</code></pre>
 
 <p>→ <strong>別 cohort / 別表現型でも同様の傾向 (高 ρ + AUC 同等) が再現するか</strong> が次の検証ポイント。</p>
 
+<h3>2.8 数値例 (worked example)</h3>
+
+<p>PRS が拾わない SNP (例: 健常者と患者で頻度が同じ SNP_D) を、RFscore-G がどう扱うかの直感的な例:</p>
+
+<p><img src="RFind-G_worked_example.png" alt="worked example" style="max-width: 100%; border: 1px solid #ddd;"></p>
+
+<p>(SNP_D は β=0 のため PRS には影響しないが、個人偏差 fc では他 SNP と並んで rank 化される → 「当該疾患 SNP 以外を多く持つ個人」では top に入り、g1 (PGS) との overlap を希釈 → 結果的に <strong>当該疾患 RFscore が相対的に下がる</strong>)</p>
+
 <hr>
 
 <h2>3. 入力データ (ROSMAP の場合)</h2>
